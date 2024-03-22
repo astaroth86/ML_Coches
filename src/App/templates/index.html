@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Precio de Coches</title>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+</head>
+<body>
+    <form action="/predict" method="post">
+        <label for="marca">Marca:</label>
+        <select id="marca" name="marca">
+            {% for marca, modelos in modelos_por_marca.items() %}
+            <option value="{{ marca }}">{{ marca }}</option>
+            {% endfor %}
+        </select><br><br>
+        <label for="modelo">Modelo:</label>
+        <select id="modelo" name="modelo"></select><br><br>
+        <label for="combustible">Combustible:</label>
+        <select id="combustible" name="combustible">
+            <option value="0">Diésel</option>
+            <option value="1">Gasolina</option>
+            <option value="2">GNC</option>
+            <option value="3">GLP</option>
+            <option value="4">Híbrido</option>
+            <option value="5">Híbrido enchufable</option>
+            <option value="6">Eléctrico</option>
+        </select><br><br>
+        <label for="anio">Año:</label>
+        <input type="number" id="anio" name="anio" required><br><br>
+        <label for="kms">Kilómetros:</label>
+        <input type="number" id="kms" name="kms" required><br><br>
+        <label for="potencia">Potencia:</label>
+        <input type="number" id="potencia" name="potencia" required><br><br>
+        <label for="puertas">Puertas:</label>
+        <input type="number" id="puertas" name="puertas" required><br><br>
+        <label for="cambio">Cambio:</label>
+        <select id="cambio" name="cambio">
+            <option value="1">Automático</option>
+            <option value="0">Manual</option>
+        </select><br><br>
+        <label for="vendedor_profesional">Vendedor profesional</label>
+        <input type="checkbox" id="vendedor_profesional" name="vendedor_profesional"><br><br>
+        <input type="submit" value="Enviar">
+    </form>
+    <h2>Precio calculado: </h2>
+    <div id="respuesta-api"></div>
+    <script>
+        $(document).ready(function() {
+            console.log("Document ready");
+            var modelosPorMarca = {
+                {% for marca, modelos in modelos_por_marca.items() %}
+                '{{ marca }}': {{ modelos|tojson }},
+                {% endfor %}
+            };
+            var marcaSelect = document.getElementById('marca');
+            var modeloSelect = document.getElementById('modelo');
+
+            marcaSelect.addEventListener('change', function() {
+                console.log("Marca seleccionada:", marcaSelect.value);
+                modeloSelect.innerHTML = '';  // Limpiar las opciones del combo de modelos
+
+                var marcaSeleccionada = marcaSelect.value;
+                var modelos = modelosPorMarca[marcaSeleccionada];
+                console.log("Modelos:", modelos);
+
+                if (modelos) {
+                    modelos[0].forEach(function(modelo) {
+                        var opcion = document.createElement('option');
+                        opcion.text = modelo;
+                        opcion.value = modelo;
+                        modeloSelect.add(opcion);
+                    });
+                }
+            });
+            $("form").submit(function(event) {
+                event.preventDefault();
+
+                const urlAPI = "/predict";
+                const data = $(this).serialize();
+
+                $.ajax({
+                    url: urlAPI,
+                    method: "POST",
+                    data: data,
+                    success: function(response) {
+                        const respuesta = document.getElementById("respuesta-api");
+                        respuesta.innerHTML = response;
+                    }
+                });
+            });
+        });
+    </script>
+</body>
+</html>
